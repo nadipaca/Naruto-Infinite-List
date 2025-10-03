@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { api } from "../api/client";
 import { CharacterMapper } from "../mappers";
 import type { Character } from "../types";
@@ -6,10 +11,13 @@ import type { Character } from "../types";
 const PAGE_SIZE = 20;
 
 // Helper function to seed individual character data from list data
-// It takes the list of characters returned from a search or paginated API call (mapped.items) and 
+// It takes the list of characters returned from a search or paginated API call (mapped.items) and
 // stores each character's data in React Query's cache as if you had fetched them individually.
-const seedCharacterDataFromList = (queryClient: any, characters: Character[]) => {
-  characters.forEach(character => {
+const seedCharacterDataFromList = (
+  queryClient: any,
+  characters: Character[]
+) => {
+  characters.forEach((character) => {
     queryClient.setQueryData(["character", String(character.id)], character);
   });
 };
@@ -31,18 +39,24 @@ const seedCharacterDataFromList = (queryClient: any, characters: Character[]) =>
 //   const { data, fetchNextPage, hasNextPage, isFetching } = useCharactersInfinite(searchTerm);
 export function useCharactersInfinite(search: string) {
   const queryClient = useQueryClient();
-  
+
   return useInfiniteQuery({
     queryKey: ["characters", { search }],
     queryFn: async ({ pageParam = 1 }) => {
       console.log(`Fetching characters: page=${pageParam}, search="${search}"`);
-      
+
       try {
         // Try multiple endpoints
         const endpoints = [
-          `/characters?page=${pageParam}&limit=${PAGE_SIZE}${search ? `&name=${search}` : ''}`,
-          `/character?page=${pageParam}&limit=${PAGE_SIZE}${search ? `&name=${search}` : ''}`,
-          `/api/characters?page=${pageParam}&limit=${PAGE_SIZE}${search ? `&name=${search}` : ''}`
+          `/characters?page=${pageParam}&limit=${PAGE_SIZE}${
+            search ? `&name=${search}` : ""
+          }`,
+          `/character?page=${pageParam}&limit=${PAGE_SIZE}${
+            search ? `&name=${search}` : ""
+          }`,
+          `/api/characters?page=${pageParam}&limit=${PAGE_SIZE}${
+            search ? `&name=${search}` : ""
+          }`,
         ];
 
         for (const endpoint of endpoints) {
@@ -50,14 +64,14 @@ export function useCharactersInfinite(search: string) {
             console.log(`Trying endpoint: ${endpoint}`);
             const { data } = await api.get(endpoint);
             console.log("API Response:", data);
-            
+
             if (data) {
               const mapped = CharacterMapper(data);
               console.log("Mapped data:", mapped);
-              
+
               // Seed individual character queries with this data
               seedCharacterDataFromList(queryClient, mapped.items);
-              
+
               return mapped;
             }
           } catch (endpointError) {
@@ -65,9 +79,8 @@ export function useCharactersInfinite(search: string) {
             continue;
           }
         }
-        
+
         throw new Error("All endpoints failed");
-        
       } catch (error) {
         console.error("API Error, using mock data:", error);
       }
@@ -96,18 +109,28 @@ export function useCharactersInfinite(search: string) {
 //
 // Example usage:
 //   const { data, isLoading, error } = useCharactersPaginated(page, searchTerm, limit);
-export function useCharactersPaginated(page: number, search: string, limit = PAGE_SIZE) {
+export function useCharactersPaginated(
+  page: number,
+  search: string,
+  limit = PAGE_SIZE
+) {
   const queryClient = useQueryClient();
-  
+
   return useQuery({
     queryKey: ["characters", "paginated", { page, search, limit }],
     queryFn: async () => {
-      console.log(`Fetching paginated characters: page=${page}, search="${search}"`);
-      
+      console.log(
+        `Fetching paginated characters: page=${page}, search="${search}"`
+      );
+
       try {
         const endpoints = [
-          `/characters?page=${page}&limit=${limit}${search ? `&name=${search}` : ''}`,
-          `/character?page=${page}&limit=${limit}${search ? `&name=${search}` : ''}`,
+          `/characters?page=${page}&limit=${limit}${
+            search ? `&name=${search}` : ""
+          }`,
+          `/character?page=${page}&limit=${limit}${
+            search ? `&name=${search}` : ""
+          }`,
         ];
 
         for (const endpoint of endpoints) {
@@ -115,19 +138,18 @@ export function useCharactersPaginated(page: number, search: string, limit = PAG
             const { data } = await api.get(endpoint);
             if (data) {
               const mapped = CharacterMapper(data);
-              
+
               // Seed individual character queries with this data
               seedCharacterDataFromList(queryClient, mapped.items);
-              
+
               return mapped;
             }
           } catch (endpointError) {
             continue;
           }
         }
-        
+
         throw new Error("All endpoints failed");
-        
       } catch (error) {
         console.error("Paginated API Error, using mock data:", error);
       }
@@ -155,12 +177,12 @@ export function useCharacter(id?: string) {
     queryKey: ["character", id],
     queryFn: async () => {
       console.log(`Fetching character: id=${id}`);
-      
+
       try {
         const endpoints = [
           `/characters/${id}`,
           `/character/${id}`,
-          `/api/characters/${id}`
+          `/api/characters/${id}`,
         ];
 
         for (const endpoint of endpoints) {
@@ -173,9 +195,8 @@ export function useCharacter(id?: string) {
             continue;
           }
         }
-        
+
         throw new Error("Character not found");
-        
       } catch (error) {
         console.error("Character API Error:", error);
       }
@@ -198,11 +219,11 @@ export function useCharacter(id?: string) {
 //   prefetchCharacter("123"); // Prefetches character with ID "123" if not already cached
 export function usePrefetchCharacter() {
   const queryClient = useQueryClient();
-  
+
   return (id: string | number) => {
     // Check if we already have this character data
     const existingData = queryClient.getQueryData(["character", String(id)]);
-    
+
     // Only prefetch if we don't have the data
     if (!existingData) {
       queryClient.prefetchQuery({
@@ -225,27 +246,27 @@ export function usePrefetchCharacter() {
 // In addition to fetch data from endpoint using useQuer, here we are using seedCharacterDataFromList -> which takes list of characters returned from a search or paginatedAPI (mapped.items)
 //  and stores each character data in React Query's cache as it was fetched individually.
 //  queryClient is an instance of React Query's cache manager.
-// seedCharacterDataFromList loops through each character and calls 
+// seedCharacterDataFromList loops through each character and calls
 //  queryClient.setQueryData(["character", String(character.id)], character);
 export function useCharacterSearch(searchTerm: string, enabled = true) {
   const queryClient = useQueryClient();
-  
+
   return useQuery({
     queryKey: ["characters", "search", searchTerm],
     queryFn: async () => {
       if (!searchTerm.trim()) return { items: [], count: 0, total: 0 };
-      
+
       console.log(`Searching characters: term="${searchTerm}"`);
-      
+
       try {
         const { data } = await api.get("/characters", {
-          params: { name: searchTerm, limit: 10 }
+          params: { name: searchTerm, limit: 10 },
         });
         const mapped = CharacterMapper(data);
-        
+
         // Seed individual character queries with search results
         seedCharacterDataFromList(queryClient, mapped.items);
-        
+
         return mapped;
       } catch (error) {
         console.error("Search API Error, using mock data:", error);
@@ -276,7 +297,7 @@ export function useFavorites() {
   const queryClient = useQueryClient();
 
   const getFavorites = (): Character[] => {
-    const stored = localStorage.getItem('naruto-favorites');
+    const stored = localStorage.getItem("naruto-favorites");
     return stored ? JSON.parse(stored) : [];
   };
 
@@ -290,11 +311,11 @@ export function useFavorites() {
     mutationFn: async (character: Character) => {
       const favorites = getFavorites();
       // Prevent duplicates
-      if (favorites.some(fav => fav.id === character.id)) {
+      if (favorites.some((fav) => fav.id === character.id)) {
         return favorites;
       }
       const updated = [...favorites, character];
-      localStorage.setItem('naruto-favorites', JSON.stringify(updated));
+      localStorage.setItem("naruto-favorites", JSON.stringify(updated));
       return updated;
     },
     onSuccess: () => {
@@ -306,8 +327,8 @@ export function useFavorites() {
   const removeFromFavorites = useMutation({
     mutationFn: async (characterId: string | number) => {
       const favorites = getFavorites();
-      const updated = favorites.filter(char => char.id !== characterId);
-      localStorage.setItem('naruto-favorites', JSON.stringify(updated));
+      const updated = favorites.filter((char) => char.id !== characterId);
+      localStorage.setItem("naruto-favorites", JSON.stringify(updated));
       return updated;
     },
     onSuccess: () => {
@@ -320,8 +341,8 @@ export function useFavorites() {
     isLoading: favoritesQuery.isLoading,
     addToFavorites,
     removeFromFavorites,
-    isFavorite: (id: string | number) => 
-      (favoritesQuery.data || []).some(char => char.id === id),
+    isFavorite: (id: string | number) =>
+      (favoritesQuery.data || []).some((char) => char.id === id),
   };
 }
 
@@ -341,28 +362,36 @@ export function useCharacterRating() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ characterId, rating }: { characterId: string; rating: number }) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    mutationFn: async ({
+      characterId,
+      rating,
+    }: {
+      characterId: string;
+      rating: number;
+    }) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return { characterId, rating };
     },
     onMutate: async ({ characterId, rating }) => {
       await queryClient.cancelQueries({ queryKey: ["character", characterId] });
-      const previousCharacter = queryClient.getQueryData(["character", characterId]);
+      const previous = queryClient.getQueryData(["character", characterId]);
       queryClient.setQueryData(["character", characterId], (old: any) => ({
         ...old,
         userRating: rating,
       }));
-      return { previousCharacter };
+      return { previous };
     },
     onError: (err, variables, context) => {
-      if (context?.previousCharacter) {
-        queryClient.setQueryData(["character", variables.characterId], context.previousCharacter);
-      }
+      // Rollback on error
+      queryClient.setQueryData(
+        ["character", variables.characterId],
+        context.previous
+      );
     },
-    onSettled: (data) => {
-      if (data) {
-        queryClient.invalidateQueries({ queryKey: ["character", data.characterId] });
-      }
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["character", variables.characterId],
+      });
     },
   });
 }

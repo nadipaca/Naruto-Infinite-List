@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useCharacter } from "../services/CharacterService";
 import FavoritesManager from "./FavoritesManager";
+import CharacterRating from "./CharacterRating";
 
 export default function CharacterPage() {
   const { id } = useParams();
@@ -27,6 +28,9 @@ export default function CharacterPage() {
           {/* Add the favorites button */}
           <div style={{ marginTop: 16 }}>
             <FavoritesManager character={c} />
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <CharacterRating characterId={c.id} initialRating={c.userRating ?? 0} />
           </div>
         </div>
 

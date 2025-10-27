@@ -97,10 +97,3 @@ This layout keeps presentational components, hooks, API logic, and types separat
 - Add or update tests for new behavior.
 - Open a pull request with a clear description of changes.
 
-## License
-
-Add your license information here (e.g., MIT) or keep the repository license consistent with your preferences.
-
-## Contact / Questions
-
-If you want specific changes to the README (more project-specific instructions, API details, screenshots, or run scripts copied from package.json), tell me what to include and I will update the README text accordingly.
